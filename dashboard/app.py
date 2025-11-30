@@ -127,6 +127,26 @@ if st.sidebar.button('Clear All Data', use_container_width=True):
     except Exception as e:
         st.sidebar.error(f'Error clearing data: {e}')
 
+# Attack Simulation (for demo)
+st.sidebar.markdown('---')
+st.sidebar.header('🎯 Demo Tools')
+st.sidebar.caption('Simulate network attacks for demonstration')
+
+if st.sidebar.button('⚡ Simulate Attack', use_container_width=True):
+    st.sidebar.warning('Starting attack simulation...')
+    try:
+        project_dir = os.path.dirname(os.path.dirname(__file__))
+        python_exe = os.path.join(project_dir, 'venv', 'Scripts', 'python.exe')
+        attack_script = os.path.join(project_dir, 'attack_simulator_bg.py')
+        # Run in background
+        subprocess.Popen([python_exe, attack_script], 
+                        creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+        st.sidebar.success('✅ Attack simulation running! Watch dashboard metrics update.')
+        time.sleep(1)
+        st.rerun()
+    except Exception as e:
+        st.sidebar.error(f'Error: {e}')
+
 # Live traffic stats
 def load_packets():
     if os.path.exists(DATA_PATH):
@@ -224,7 +244,7 @@ if not packets.empty:
     # Group by source IP
     device_stats = packets.groupby('src_ip').agg({
         'packet_length': ['count', 'sum', 'mean'],
-        'protocol': lambda x: ', '.join(x.unique()[:3]),
+        'protocol': lambda x: ', '.join([str(p) for p in x.unique()[:3] if pd.notnull(p)]),
         'dst_ip': 'nunique'
     }).reset_index()
     
