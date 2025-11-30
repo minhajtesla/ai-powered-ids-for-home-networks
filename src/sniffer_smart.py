@@ -72,7 +72,7 @@ def get_wifi_ip():
     return None
 
 def get_wifi_network_name():
-    """Get current Wi-Fi network SSID from netsh"""
+    """Get current Wi-Fi network SSID from netsh or IP-based detection"""
     try:
         result = subprocess.run(['netsh', 'wlan', 'show', 'interfaces'], 
                               capture_output=True, text=True, shell=True)
@@ -80,17 +80,36 @@ def get_wifi_network_name():
             if 'SSID' in line and 'BSSID' not in line:
                 parts = line.split(':', 1)
                 if len(parts) == 2:
-                    return parts[1].strip()
+                    ssid = parts[1].strip()
+                    if ssid:
+                        return ssid
     except:
         pass
+    
+    # Fallback: detect by IP range
+    wifi_ip = get_wifi_ip()
+    if wifi_ip:
+        if wifi_ip.startswith('192.168.1.'):
+            return "SadiaSultana"
+        elif wifi_ip.startswith('10.19.32.'):
+            return "Previous Network (10.19.32.x)"
+    
     return "Unknown Network"
 
 if __name__ == '__main__':
     from scapy.all import get_if_list
     
+    # Clear old data files for fresh session
+    LOG_PATH = os.path.join(os.path.dirname(__file__), '..', 'data', 'alerts.log')
+    if os.path.exists(DATA_PATH):
+        os.remove(DATA_PATH)
+    if os.path.exists(LOG_PATH):
+        os.remove(LOG_PATH)
+    
     print('=' * 80)
-    print(' AI-Powered IDS - Smart Network Packet Sniffer')
+    print('🛡️ AI-Powered IDS - Smart Network Packet Sniffer')
     print('=' * 80)
+    print('✅ Old data cleared - starting fresh session')
     
     wifi_ip = get_wifi_ip()
     wifi_network = get_wifi_network_name()
